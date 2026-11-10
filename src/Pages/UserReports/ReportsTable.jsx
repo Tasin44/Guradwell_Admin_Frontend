@@ -7,7 +7,7 @@ const tabs = [
   { key: "Dismissed", label: "Dismissed" },
 ];
 
-const ReportsTable = ({ reports, onSelectReport }) => {
+const ReportsTable = ({ reports = [], loading, onSelectReport }) => {
   const [activeTab, setActiveTab] = useState("Open");
 
   const counts = useMemo(
@@ -31,7 +31,7 @@ const ReportsTable = ({ reports, onSelectReport }) => {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`pb-3 text-sm font-medium transition-colors relative flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+            className={`pb-3 text-sm font-medium transition-colors relative flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === tab.key
                 ? "text-[#1a2744]"
                 : "text-gray-400 hover:text-gray-600"
@@ -69,7 +69,11 @@ const ReportsTable = ({ reports, onSelectReport }) => {
           )}
         </div>
 
-        {filteredReports.length === 0 ? (
+        {loading ? (
+          <div className="px-5 py-12 text-center text-sm text-gray-400">
+            Loading reports...
+          </div>
+        ) : filteredReports.length === 0 ? (
           <div className="px-5 py-12 text-center text-sm text-gray-400">
             No {activeTab.toLowerCase()} reports
           </div>
@@ -78,32 +82,32 @@ const ReportsTable = ({ reports, onSelectReport }) => {
             {filteredReports.map((report) => (
               <li key={report.id}>
                 <button
+                  type="button"
                   onClick={() => onSelectReport(report)}
-                  className="w-full px-4 sm:px-5 py-4 flex items-center cursor-pointer gap-3 sm:gap-4 hover:bg-gray-50/70 transition-colors text-left"
+                  className="w-full px-4 sm:px-5 py-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50/70 transition-colors text-left cursor-pointer"
                 >
                   <div
-                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${report.avatarBg}`}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${report.avatarBg}`}
                   >
                     {report.initials}
                   </div>
-
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      {report.member}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-0.5 line-clamp-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-900 truncate">
+                        {report.member}
+                      </span>
+                      <span className="text-xs text-gray-400 shrink-0">
+                        · {report.time}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 truncate mt-0.5">
                       &ldquo;{report.comment}&rdquo;
                     </p>
-                    <p className="text-xs text-gray-400 mt-1 truncate">
-                      Reported by {report.reportedBy} · {report.time} ·{" "}
-                      {report.postTitle}
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      Reported by {report.reportedBy} {report.reason ? `· Reason: ${report.reason}` : ""}
                     </p>
                   </div>
-
-                  <div className="flex items-center gap-1 shrink-0 text-xs text-gray-400">
-                    <span className="hidden sm:inline">{report.id}</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
                 </button>
               </li>
             ))}

@@ -4,14 +4,22 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import logo from "../../assets/logo/logo.svg";
+import adminApi from "../../lib/admin-api";
+import { setCookie } from "../../lib/cookie-utils";
 
-const Login = () => {
+const SignIn = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      email: "admin@guardwell.com",
+      password: "AdminSecretPassword123!",
+    },
+  });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const togglePasswordVisibility = () => {
@@ -19,16 +27,41 @@ const Login = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log(data);
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "success",
-      title: "Login successfully",
-      showConfirmButton: false,
-      timer: 1500,
-    });
-    navigate("/");
+    setLoading(true);
+    try {
+      const responseData = await adminApi.login(data.email, data.password);
+
+      if (responseData?.access_token) {
+        setCookie("access_token", responseData.access_token, { maxAge: 30 * 24 * 60 * 60 });
+      }
+      if (responseData?.refresh_token) {
+        setCookie("refresh_token", responseData.refresh_token, { maxAge: 30 * 24 * 60 * 60 });
+      }
+      if (responseData?.user?.role) {
+        setCookie("role", responseData.user.role, { maxAge: 30 * 24 * 60 * 60 });
+      }
+      setCookie("isAuthenticated", "true", { maxAge: 30 * 24 * 60 * 60 });
+
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Signed in successfully",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+
+      navigate("/");
+    } catch (err) {
+      console.error("Sign-in error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Sign-in Failed",
+        text: err.response?.data?.message || "Invalid email or password",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,7 +70,7 @@ const Login = () => {
         <div className="flex items-center justify-center mb-3">
           <img
             src={logo}
-            alt=""
+            alt="Guardwell"
             className="w-1/3 select-none pointer-events-none"
           />
         </div>
@@ -45,7 +78,7 @@ const Login = () => {
           Welcome Back!
         </h2>
         <p className="text-xs text-gray-500 text-center mb-6">
-          Enter your email and password to access your account.
+          Enter your email and password to access the admin portal.
         </p>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
@@ -85,7 +118,7 @@ const Login = () => {
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="absolute inset-y-0 right-3 flex items-center text-gray-300"
+                className="absolute inset-y-0 right-3 flex items-center text-gray-300 cursor-pointer"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -98,16 +131,12 @@ const Login = () => {
 
             <div className="flex justify-between items-center mt-2 text-xs">
               <div className="flex items-center opacity-55">
-                <input
-                  type="checkbox"
-                  {...register("remember")}
-                  className="mr-2"
-                />
-                Remember me
+                <input type="checkbox" id="remember" className="mr-1" />
+                <label htmlFor="remember">Remember Me</label>
               </div>
               <Link
-                to="/forget-password"
-                className="text-[#002457] text-xs hover:underline"
+                to="/forgot-password"
+                className="hover:underline text-blue-800"
               >
                 Forgot Password?
               </Link>
@@ -116,9 +145,10 @@ const Login = () => {
 
           <button
             type="submit"
-            className="w-full bg-[#002457] text-white py-2 rounded-full font-medium hover:shadow-lg transition-shadow"
+            disabled={loading}
+            className="w-full bg-[#002457] text-white py-2 rounded-full font-medium hover:shadow-lg transition-shadow cursor-pointer disabled:opacity-50"
           >
-            Login
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       </div>
@@ -126,4 +156,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default SignIn;

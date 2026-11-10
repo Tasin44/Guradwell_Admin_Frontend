@@ -4,13 +4,13 @@ import { statusStyles } from "./serviceTicketData";
 
 const tabs = ["All", "New", "In progress", "Completed"];
 
-const ServiceTicketsTable = ({ tickets, onSelectTicket }) => {
+const ServiceTicketsTable = ({ tickets, loading, onSelectTicket }) => {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
 
   const filteredData = useMemo(() => {
-    let data = tickets.filter((ticket) => {
+    let data = (tickets || []).filter((ticket) => {
       const matchesTab = activeTab === "All" || ticket.status === activeTab;
       const searchTerm = search.toLowerCase();
       const matchesSearch =
@@ -48,7 +48,7 @@ const ServiceTicketsTable = ({ tickets, onSelectTicket }) => {
         ))}
       </div>
 
-      <div className="rounded-xl border border-[#EAEDEB] bg-white shadow-[0_1px_2px_rgba(16,34,40,0.05)]overflow-hidden">
+      <div className="rounded-xl border border-[#EAEDEB] bg-white shadow-[0_1px_2px_rgba(16,34,40,0.05)] overflow-hidden">
         <div className="px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -92,7 +92,16 @@ const ServiceTicketsTable = ({ tickets, onSelectTicket }) => {
             </thead>
 
             <tbody>
-              {filteredData.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-5 py-12 text-center text-sm text-gray-400"
+                  >
+                    Loading service tickets...
+                  </td>
+                </tr>
+              ) : filteredData.length > 0 ? (
                 filteredData.map((ticket) => (
                   <tr
                     key={ticket.id}
@@ -137,7 +146,7 @@ const ServiceTicketsTable = ({ tickets, onSelectTicket }) => {
                     <td className="px-5 py-4">
                       <span
                         className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                          statusStyles[ticket.status]
+                          statusStyles[ticket.status] || statusStyles.New
                         }`}
                       >
                         {ticket.status}
@@ -147,7 +156,7 @@ const ServiceTicketsTable = ({ tickets, onSelectTicket }) => {
                     <td className="px-5 py-4 text-right">
                       <button
                         onClick={() => onSelectTicket(ticket)}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-[#1a2744] hover:underline"
+                        className="inline-flex items-center gap-1 text-sm font-medium text-[#1a2744] hover:underline cursor-pointer"
                       >
                         Open
                         <ChevronRight className="w-4 h-4" />
